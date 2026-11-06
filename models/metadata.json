@@ -1,0 +1,65 @@
+{
+  "best_model_name": "Random Forest",
+  "features": [
+    "profile pic",
+    "nums/length username",
+    "fullname words",
+    "nums/length fullname",
+    "name==username",
+    "description length",
+    "external URL",
+    "private",
+    "#posts",
+    "#followers",
+    "#follows",
+    "follower_following_ratio",
+    "posts_to_followers_ratio",
+    "username_to_fullname_digit_diff",
+    "has_bio"
+  ],
+  "target": "fake",
+  "cv_results": [
+    {
+      "Model": "Random Forest",
+      "Accuracy": 0.9403439803439804,
+      "Precision": 0.9367678679457263,
+      "Recall": 0.9456493506493506,
+      "F1": 0.9405189036931002,
+      "ROC-AUC": 0.9869445100354192
+    },
+    {
+      "Model": "Decision Tree",
+      "Accuracy": 0.9168714168714167,
+      "Precision": 0.9216947335498024,
+      "Recall": 0.9131168831168832,
+      "F1": 0.9166436638430845,
+      "ROC-AUC": 0.9145295159386068
+    },
+    {
+      "Model": "Logistic Regression",
+      "Accuracy": 0.9059295659295661,
+      "Precision": 0.9293022036836762,
+      "Recall": 0.8803246753246752,
+      "F1": 0.9032467013049537,
+      "ROC-AUC": 0.9724073199527744
+    },
+    {
+      "Model": "SVM",
+      "Accuracy": 0.8987551187551187,
+      "Precision": 0.9294812818209046,
+      "Recall": 0.8659740259740258,
+      "F1": 0.8953309010189745,
+      "ROC-AUC": 0.9613175914994097
+    },
+    {
+      "Model": "KNN",
+      "Accuracy": 0.8877968877968877,
+      "Precision": 0.9133790094564673,
+      "Recall": 0.8585064935064934,
+      "F1": 0.8835911271331052,
+      "ROC-AUC": 0.9523140495867768
+    }
+  ],
+  "random_state": 42,
+  "train_samples": 553
+}
