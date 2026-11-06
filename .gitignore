@@ -21,7 +21,6 @@ data/sample/*
 !data/sample/.gitkeep
 
 # Model weights & binaries
-models/*.joblib
 !models/.gitkeep
 
 # OS generated files
