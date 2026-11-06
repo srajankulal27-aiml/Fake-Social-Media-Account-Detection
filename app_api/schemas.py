@@ -141,3 +141,37 @@ class HealthResponse(BaseModel):
     model_name: Optional[str] = None
     target_column: Optional[str] = None
     features_count: Optional[int] = None
+
+class QuickFillParseRequest(BaseModel):
+    raw_text: Optional[str] = None
+    username_or_url: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    posts: Optional[int] = None
+    followers: Optional[int] = None
+    following: Optional[int] = None
+    profile_pic: Optional[int] = 1
+    is_private: Optional[int] = 0
+
+
+class QuickFillPredictRequest(BaseModel):
+    username: str = Field(..., min_length=1, max_length=30)
+    full_name: Optional[str] = ""
+    bio: Optional[str] = ""
+    posts: int = Field(default=0, ge=0)
+    followers: int = Field(default=0, ge=0)
+    following: int = Field(default=0, ge=0)
+    profile_pic: int = Field(default=1, ge=0, le=1)
+    is_private: int = Field(default=0, ge=0, le=1)
+
+
+class QuickFillParseResponse(BaseModel):
+    detected_username: Optional[str] = None
+    full_name: Optional[str] = ""
+    bio: Optional[str] = ""
+    posts: Optional[int] = 0
+    followers: Optional[int] = 0
+    following: Optional[int] = 0
+    profile_pic: int = 1
+    is_private: int = 0
+    derived_features: Dict[str, Any]

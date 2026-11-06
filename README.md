@@ -90,11 +90,12 @@ This project delivers an end-to-end, reproducible Machine Learning (ML) solution
 | **NumPy** | Numerical array operations and mathematical transformations | Required |
 | **Scikit-learn** | Preprocessing pipelines, standard ML algorithms, and metrics | Required |
 | **SHAP** | TreeSHAP per-prediction explainability and feature contribution attribution | Required |
+| **Pillow & PyTesseract** | In-memory image processing and local OCR extraction | Required |
+| **Anthropic (Optional)** | Claude Vision backend for high-fidelity screenshot extraction | Optional |
 | **Matplotlib & Seaborn** | Static visualization generation for EDA and evaluation reports | Required |
 | **joblib** | Serialization and loading of trained pipelines and transformers | Required |
 | **pytest & httpx** | Automated test suite for data validation, inference, and API endpoints | Required |
 | **SQLite** | Local embedded relational database for prediction history | Required |
-| **Streamlit** | Legacy UI prototype (retained under `app/` for reference) | Optional |
 
 ---
 
@@ -245,16 +246,19 @@ flowchart TD
 
 ```text
 FSMD/
-├── app_api/                 # FastAPI Web Application & API
+├── app_api/                 # Production FastAPI web application
+│   ├── __init__.py
 │   ├── main.py              # Application entrypoint, routes, and lifespan handler
 │   ├── schemas.py           # Pydantic v2 validation models
+│   ├── quickfill.py         # Text/handle parsing & feature derivation logic
+│   ├── screenshot.py        # In-memory image OCR & Claude fallback logic
 │   ├── static/              # Static assets
 │   │   ├── css/style.css    # Custom styling
 │   │   └── js/app.js        # Vanilla JS client logic & Chart.js integration
 │   └── templates/           # Jinja2 HTML templates
 │       ├── base.html        # Layout wrapper & navigation
 │       ├── index.html       # Landing page with headline metrics
-│       ├── predict.html     # Single account prediction form
+│       ├── predict.html     # Single account prediction form (Screenshot, QuickFill, Advanced)
 │       ├── batch.html       # CSV batch upload & audit dashboard
 │       ├── performance.html # Model metrics, benchmarks, and evaluation plots
 │       ├── eda.html         # Exploratory data analysis & statistical distributions
@@ -274,13 +278,16 @@ FSMD/
 │   ├── features.py          # Feature engineering ratios and indicators
 │   ├── train.py             # 5-fold CV training and model selection
 │   ├── evaluate.py          # Test set evaluation and diagnostic plotting
-│   ├── predict.py           # Core inference engine and risk assigner
+│   ├── predict.py           # Core inference engine, SHAP local attributions & risk assigner
 │   └── database.py          # SQLite database connection and query routines
 ├── tests/
 │   ├── test_preprocessing.py # Cleaning and split unit tests
 │   ├── test_predict.py       # Inference reproducibility and logic tests
+│   ├── test_quickfill.py     # Quick fill parsing unit tests
+│   ├── test_screenshot.py    # Screenshot memory-only OCR tests
 │   └── test_api.py           # FastAPI endpoint and HTML route test suite
-├── app/                     # (Legacy Streamlit application - retained for reference)
+├── run.ps1                  # Single-command PowerShell app launch script
+├── run_tests.ps1            # Single-command PowerShell test runner script
 ├── Procfile                 # Deployment command for web servers
 ├── render.yaml              # Render deployment configuration
 ├── requirements.txt         # Pinned project dependencies
@@ -305,8 +312,12 @@ FSMD/
    pip install -r requirements.txt
    ```
 
-### Run the FastAPI Web Application
-Start the ASGI server:
+### Run the Web Application
+Launch with the one-command PowerShell script:
+```powershell
+.\run.ps1
+```
+Or directly using Uvicorn:
 ```powershell
 .\.venv\Scripts\uvicorn.exe app_api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
@@ -314,9 +325,13 @@ Start the ASGI server:
 - **Interactive Swagger API Docs:** Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 ### Run Test Suite
-Execute the entire test suite (24 unit, model, and API tests):
+Run all 36 test cases with the PowerShell runner:
 ```powershell
-.\.venv\Scripts\pytest.exe tests/
+.\run_tests.ps1
+```
+Or via pytest:
+```powershell
+.\.venv\Scripts\pytest.exe -v
 ```
 
 ---

@@ -25,7 +25,16 @@ from app_api.schemas import (
     BatchPredictResponse,
     BatchSummary,
     HealthResponse,
+    QuickFillParseRequest,
+    QuickFillPredictRequest,
+    QuickFillParseResponse,
 )
+from app_api.quickfill import (
+    extract_username,
+    parse_counts,
+    compute_features,
+)
+from app_api.screenshot import extract_from_screenshot
 
 # Global Predictor instance loaded once at startup
 predictor_instance: Optional[Predictor] = None
@@ -146,6 +155,128 @@ async def api_predict(payload: ProfilePredictRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Inference processing error: {str(ex)}"
+        )
+
+
+@app.post("/api/quickfill/parse", response_model=QuickFillParseResponse)
+async def api_quickfill_parse(payload: QuickFillParseRequest):
+    """Parse pasted profile text or handle into structured fields and derived 11 features.
+    Does NOT contact external social media networks.
+    """
+    raw_text = payload.raw_text or ""
+    detected_user = payload.username_or_url
+    if detected_user:
+        detected_user = extract_username(detected_user)
+    
+    parsed_counts = parse_counts(raw_text) if raw_text else {"posts": None, "followers": None, "following": None}
+    
+    posts = payload.posts if payload.posts is not None else (parsed_counts.get("posts") or 0)
+    followers = payload.followers if payload.followers is not None else (parsed_counts.get("followers") or 0)
+    following = payload.following if payload.following is not None else (parsed_counts.get("following") or 0)
+    
+    full_name = payload.full_name or ""
+    bio = payload.bio or ""
+    if not full_name and raw_text:
+        lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+        if len(lines) > 1 and not lines[1].isdigit():
+            full_name = lines[1]
+    if not bio and raw_text:
+        bio = raw_text
+
+    username = detected_user or "unknown_user"
+    derived = compute_features(
+        username=username,
+        full_name=full_name,
+        bio=bio,
+        posts=posts,
+        followers=followers,
+        following=following,
+        profile_pic=payload.profile_pic if payload.profile_pic is not None else 1,
+        is_private=payload.is_private if payload.is_private is not None else 0
+    )
+
+    return QuickFillParseResponse(
+        detected_username=detected_user,
+        full_name=full_name,
+        bio=bio,
+        posts=posts,
+        followers=followers,
+        following=following,
+        profile_pic=payload.profile_pic if payload.profile_pic is not None else 1,
+        is_private=payload.is_private if payload.is_private is not None else 0,
+        derived_features=derived
+    )
+
+
+@app.post("/api/quickfill/predict", response_model=PredictResponse)
+async def api_quickfill_predict(payload: QuickFillPredictRequest):
+    """Derive features from raw profile attributes and run inference with SHAP explanations."""
+    features = compute_features(
+        username=payload.username,
+        full_name=payload.full_name or "",
+        bio=payload.bio or "",
+        posts=payload.posts,
+        followers=payload.followers,
+        following=payload.following,
+        profile_pic=payload.profile_pic,
+        is_private=payload.is_private
+    )
+    
+    pred_engine = get_predictor()
+    try:
+        res = pred_engine.predict_record(features)
+        
+        # Log to database
+        log_prediction(
+            mode="QuickFill Single",
+            input_dict={**features, "username": payload.username},
+            label=res["label"],
+            proba=res["fake_probability"],
+            risk=res["risk_level"]
+        )
+
+        return PredictResponse(
+            label=res["label"],
+            is_fake=res["prediction"],
+            fake_probability=res["fake_probability"],
+            genuine_probability=res["genuine_probability"],
+            risk_level=res["risk_level"],
+            top_features=res["top_features"],
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+    except Exception as ex:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"QuickFill inference error: {str(ex)}"
+        )
+
+
+@app.post("/api/screenshot/extract")
+async def api_screenshot_extract(file: UploadFile = File(...)):
+    """Extract profile features from screenshot strictly in memory.
+    Never persists, logs, or saves image bytes.
+    """
+    valid_mimes = ["image/jpeg", "image/png", "image/webp", "image/bmp"]
+    if file.content_type not in valid_mimes and not any(file.filename.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="File must be an image (JPEG, PNG, or WebP)."
+        )
+
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Image size exceeds 10 MB limit."
+        )
+
+    try:
+        extraction = extract_from_screenshot(contents)
+        return extraction
+    except Exception as ex:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OCR extraction failed: {str(ex)}"
         )
 
 

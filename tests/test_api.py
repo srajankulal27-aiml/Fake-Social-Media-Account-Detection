@@ -219,3 +219,54 @@ def test_html_pages_return_200(path):
     response = client.get(path)
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
+
+
+def test_quickfill_parse_endpoint():
+    payload = {
+        "raw_text": "@test_creator 50 posts 1.2K followers 300 following\nCreative writer",
+        "username_or_url": "test_creator"
+    }
+    response = client.post("/api/quickfill/parse", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["detected_username"] == "test_creator"
+    assert data["posts"] == 50
+    assert data["followers"] == 1200
+    assert "derived_features" in data
+    assert data["derived_features"]["profile pic"] == 1
+
+
+def test_quickfill_predict_endpoint():
+    payload = {
+        "username": "suspicious_user_4492",
+        "full_name": "Suspicious User 4492",
+        "bio": "Get rich quick at http://bit.ly/spam",
+        "posts": 2,
+        "followers": 10,
+        "following": 800,
+        "profile_pic": 0,
+        "is_private": 0
+    }
+    response = client.post("/api/quickfill/predict", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "label" in data
+    assert "fake_probability" in data
+    assert "top_features" in data
+    assert len(data["top_features"]) == 5
+
+
+def test_screenshot_extract_endpoint():
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    img = Image.new("RGB", (60, 60), color=(255, 255, 255))
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    files = {"file": ("test_avatar.png", buf.getvalue(), "image/png")}
+    response = client.post("/api/screenshot/extract", files=files)
+    assert response.status_code == 200
+    data = response.json()
+    assert "features" in data
+    assert "profile pic" in data["features"]

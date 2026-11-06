@@ -1,65 +1,126 @@
 {% extends "base.html" %}
-{% block title %}Single Account Prediction - FSMD{% endblock %}
+{% block title %}Account Prediction & Triage - FSMD{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
+<div class="row mb-3">
     <div class="col-12">
-        <h2 class="fw-bold">🔍 Single Account Risk Assessment</h2>
-        <p class="text-muted">Fill out the profile attributes below to evaluate the account with the trained ML pipeline.</p>
+        <h2 class="fw-bold">🔍 Social Media Profile Authenticity Detection</h2>
+        <p class="text-muted">Analyze an account using screenshot OCR extraction, raw profile text parsing, or direct feature inputs.</p>
+        
+        <!-- Ethics and Privacy Notice -->
+        <div class="alert alert-secondary py-2 px-3 small d-flex align-items-center">
+            <i class="bi bi-shield-check fs-5 me-2 text-success"></i>
+            <div>
+                <strong>Privacy & Ethics Assurance:</strong> This tool runs completely locally. 
+                <strong>No live scraping or external Instagram network requests</strong> are performed. 
+                Screenshots are processed <strong>strictly in memory</strong> (never saved to disk or database). 
+                The model inspects metadata and counts, never pixel faces or private photos.
+            </div>
+        </div>
     </div>
 </div>
 
+<!-- Input Method Tabs -->
+<ul class="nav nav-pills mb-4" id="predictTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-screenshot" data-bs-toggle="pill" data-bs-target="#content-screenshot" type="button" role="tab">
+            📸 Screenshot OCR
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-quickfill" data-bs-toggle="pill" data-bs-target="#content-quickfill" type="button" role="tab">
+            ⚡ Quick Fill (Text/Handle)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-advanced" data-bs-toggle="pill" data-bs-target="#content-advanced" type="button" role="tab">
+            🎛️ Advanced (Direct Features)
+        </button>
+    </li>
+</ul>
+
 <div class="row">
-    <!-- Input Form -->
+    <!-- Left Column: Inputs & Parsed Values -->
     <div class="col-lg-7">
+        <div class="tab-content" id="predictTabContent">
+            
+            <!-- 1. SCREENSHOT OCR TAB -->
+            <div class="tab-pane fade show active" id="content-screenshot" role="tabpanel">
+                <div class="card p-4 mb-3">
+                    <h5 class="fw-bold text-primary mb-2">Upload Profile Screenshot</h5>
+                    <p class="small text-muted mb-3">Upload a screenshot of the account header. OCR extracts username, bio, post count, and followers in memory.</p>
+                    
+                    <form id="screenshot-form">
+                        <div class="mb-3">
+                            <input class="form-control" type="file" id="screenshot-input" accept="image/png, image/jpeg, image/webp" required>
+                            <div class="form-text">Supported: PNG, JPG, WebP (Max 10 MB). Processed in RAM only.</div>
+                        </div>
+                        <button type="submit" id="screenshot-btn" class="btn btn-outline-primary w-100">
+                            <span id="screenshot-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                            Extract Profile Data from Image
+                        </button>
+                    </form>
+                    <div id="screenshot-error" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+            </div>
+
+            <!-- 2. QUICK FILL TAB -->
+            <div class="tab-pane fade" id="content-quickfill" role="tabpanel">
+                <div class="card p-4 mb-3">
+                    <h5 class="fw-bold text-primary mb-2">Quick Fill from Profile Text</h5>
+                    <p class="small text-muted mb-3">Paste profile header text (e.g. <code>@username · 120 posts · 1.5K followers · 300 following</code>) or enter a handle.</p>
+                    
+                    <form id="quickfill-parse-form">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Profile Header or Bio Text</label>
+                            <textarea class="form-control" id="qf-raw-text" rows="3" placeholder="Paste full bio or counts here, e.g.:&#10;@john_doe_99&#10;John Doe | Photographer&#10;150 posts   2.5K followers   410 following"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Username / Handle (optional override)</label>
+                            <input type="text" class="form-control" id="qf-handle" placeholder="@username or instagram.com/username">
+                        </div>
+                        <button type="submit" id="qf-parse-btn" class="btn btn-outline-primary w-100">
+                            <span id="qf-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                            Parse & Extract Profile Fields
+                        </button>
+                    </form>
+                    <div id="quickfill-error" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+            </div>
+
+            <!-- 3. ADVANCED (DIRECT) TAB -->
+            <div class="tab-pane fade" id="content-advanced" role="tabpanel">
+                <div class="card p-4 mb-3">
+                    <h5 class="fw-bold text-primary mb-2">Direct Raw Feature Input</h5>
+                    <p class="small text-muted mb-3">Directly supply the 11 raw numeric features used by the underlying Random Forest model.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- REVIEW & ADJUST EDITABLE FORM -->
         <div class="card p-4">
-            <form id="predict-form">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">Profile Attributes for Inference</h5>
+                <span class="badge bg-light text-dark border">Review & Fine-Tune</span>
+            </div>
+            
+            <form id="unified-predict-form">
                 <div class="row g-3">
-                    <div class="col-12">
-                        <h6 class="text-primary fw-bold mb-2">1. Profile Details</h6>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Username</label>
+                        <input type="text" class="form-control" id="input-username" value="user_profile">
+                        <div class="form-text">Used to derive digit ratio & name matching.</div>
                     </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Full Name</label>
+                        <input type="text" class="form-control" id="input-fullname" value="User Profile">
+                    </div>
+
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Profile Picture Present?</label>
                         <select class="form-select" id="profile_pic" required>
                             <option value="1" selected>Yes (1)</option>
                             <option value="0">No (0)</option>
-                        </select>
-                        <div class="form-text">Bots frequently lack customized profile avatars.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Username Digit Ratio</label>
-                        <input type="number" step="0.01" min="0.0" max="1.0" class="form-control" id="nums_length_username" value="0.05" required>
-                        <div class="form-text">Ratio of numbers to total length (e.g. 0.33 for user12).</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Full Name Words</label>
-                        <input type="number" min="0" max="20" class="form-control" id="fullname_words" value="2" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Full Name Digit Ratio</label>
-                        <input type="number" step="0.01" min="0.0" max="1.0" class="form-control" id="nums_length_fullname" value="0.00" required>
-                    </div>
-
-                    <div class="col-12 mt-4">
-                        <h6 class="text-primary fw-bold mb-2">2. Account Metadata</h6>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Full Name Equals Username?</label>
-                        <select class="form-select" id="name_equals_username" required>
-                            <option value="0" selected>No (Different)</option>
-                            <option value="1">Yes (Identical)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Bio / Description Length</label>
-                        <input type="number" min="0" max="500" class="form-control" id="description_length" value="55" required>
-                        <div class="form-text">Character count of the biography.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">External URL in Bio?</label>
-                        <select class="form-select" id="external_url" required>
-                            <option value="0" selected>No</option>
-                            <option value="1">Yes</option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -70,26 +131,60 @@
                         </select>
                     </div>
 
-                    <div class="col-12 mt-4">
-                        <h6 class="text-primary fw-bold mb-2">3. Activity & Network Ratios</h6>
-                    </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Total Posts</label>
+                        <label class="form-label small fw-semibold">Posts Count</label>
                         <input type="number" min="0" class="form-control" id="posts" value="120" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Followers Count</label>
+                        <label class="form-label small fw-semibold">Followers</label>
                         <input type="number" min="0" class="form-control" id="followers" value="450" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Following Count</label>
+                        <label class="form-label small fw-semibold">Following</label>
                         <input type="number" min="0" class="form-control" id="follows" value="280" required>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Biography / Description</label>
+                        <textarea class="form-control" id="input-bio" rows="2" placeholder="Account bio...">Photography enthusiast | Digital creator | Exploring cities</textarea>
+                    </div>
+
+                    <!-- Hidden or Advanced Ratios populated automatically -->
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Username Digits/Len</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_username" value="0.0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Fullname Words</label>
+                        <input type="number" class="form-control form-control-sm" id="fullname_words" value="2">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Fullname Digits/Len</label>
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_fullname" value="0.0">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Name == Username</label>
+                        <select class="form-select form-select-sm" id="name_equals_username">
+                            <option value="0" selected>No (0)</option>
+                            <option value="1">Yes (1)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">Bio Length (chars)</label>
+                        <input type="number" class="form-control form-control-sm" id="description_length" value="55">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">External URL Present?</label>
+                        <select class="form-select form-select-sm" id="external_url">
+                            <option value="0" selected>No (0)</option>
+                            <option value="1">Yes (1)</option>
+                        </select>
                     </div>
 
                     <div class="col-12 mt-4">
                         <button type="submit" id="predict-submit-btn" class="btn btn-primary w-100 py-2 fw-semibold">
                             <span id="predict-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
-                            Analyze Account Authenticity
+                            Run Model Prediction & Explain
                         </button>
                     </div>
                 </div>
@@ -98,22 +193,22 @@
         </div>
     </div>
 
-    <!-- Output Card -->
+    <!-- Right Column: Result Outcome & SHAP Waterfall -->
     <div class="col-lg-5">
-        <div id="predict-result-card" class="card p-4 d-none">
-            <h5 class="fw-bold mb-3">Assessment Outcome</h5>
+        <div id="predict-result-card" class="card p-4 d-none shadow-sm sticky-top" style="top: 20px;">
+            <h5 class="fw-bold mb-3">Model Prediction Outcome</h5>
             
             <div class="d-flex align-items-center justify-content-between mb-3">
-                <span class="text-muted">Prediction Label:</span>
+                <span class="text-muted">Prediction:</span>
                 <span id="result-badge" class="badge bg-secondary fs-5">Unknown</span>
             </div>
 
             <div class="mb-3">
                 <div class="d-flex justify-content-between mb-1 small">
-                    <span class="text-muted">Probability:</span>
+                    <span class="text-muted">Fake Probability:</span>
                     <span id="result-prob-text" class="fw-semibold">0%</span>
                 </div>
-                <div class="progress">
+                <div class="progress" style="height: 10px;">
                     <div id="result-prob-bar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
                 </div>
             </div>
@@ -125,12 +220,15 @@
 
             <hr>
 
-            <h6 class="fw-bold mb-3">Top Influential Features (Model Drivers)</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0">Feature Explanations (SHAP)</h6>
+                <span id="shap-source-badge" class="badge bg-light text-secondary border">Local SHAP</span>
+            </div>
+            <p class="small text-muted mb-3">Signed contributions for this specific profile: red bars push toward Fake, green bars push toward Genuine.</p>
             <div id="result-features-list">
-                <!-- Populated via JavaScript -->
+                <!-- Populated via JavaScript with directional bars -->
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-
