@@ -1,0 +1,99 @@
+:root {
+    --primary-blue: #0d6efd;
+    --navy-dark: #0f172a;
+    --risk-low: #198754;
+    --risk-review: #ffc107;
+    --risk-high: #dc3545;
+}
+
+body {
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+}
+
+.metric-card {
+    border-left: 4px solid var(--primary-blue);
+    padding: 1.25rem;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.metric-card.accent-green {
+    border-left-color: var(--risk-low);
+}
+
+.metric-card.accent-red {
+    border-left-color: var(--risk-high);
+}
+
+.metric-card.accent-amber {
+    border-left-color: #d97706;
+}
+
+.badge-risk-low {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-risk-review {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.badge-risk-high {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.progress {
+    height: 1.25rem;
+    border-radius: 0.5rem;
+}
+
+.feature-bar-container {
+    margin-bottom: 0.75rem;
+}
+
+.feature-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+footer {
+    background: #0f172a;
+    color: #94a3b8;
+    margin-top: auto;
+}
+

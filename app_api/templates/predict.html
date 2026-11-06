@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Single Account Prediction - FSMD{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">🔍 Single Account Risk Assessment</h2>
+        <p class="text-muted">Fill out the profile attributes below to evaluate the account with the trained ML pipeline.</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Input Form -->
+    <div class="col-lg-7">
+        <div class="card p-4">
+            <form id="predict-form">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <h6 class="text-primary fw-bold mb-2">1. Profile Details</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Profile Picture Present?</label>
+                        <select class="form-select" id="profile_pic" required>
+                            <option value="1" selected>Yes (1)</option>
+                            <option value="0">No (0)</option>
+                        </select>
+                        <div class="form-text">Bots frequently lack customized profile avatars.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Username Digit Ratio</label>
+                        <input type="number" step="0.01" min="0.0" max="1.0" class="form-control" id="nums_length_username" value="0.05" required>
+                        <div class="form-text">Ratio of numbers to total length (e.g. 0.33 for user12).</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Full Name Words</label>
+                        <input type="number" min="0" max="20" class="form-control" id="fullname_words" value="2" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Full Name Digit Ratio</label>
+                        <input type="number" step="0.01" min="0.0" max="1.0" class="form-control" id="nums_length_fullname" value="0.00" required>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <h6 class="text-primary fw-bold mb-2">2. Account Metadata</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Full Name Equals Username?</label>
+                        <select class="form-select" id="name_equals_username" required>
+                            <option value="0" selected>No (Different)</option>
+                            <option value="1">Yes (Identical)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Bio / Description Length</label>
+                        <input type="number" min="0" max="500" class="form-control" id="description_length" value="55" required>
+                        <div class="form-text">Character count of the biography.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">External URL in Bio?</label>
+                        <select class="form-select" id="external_url" required>
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Account Private?</label>
+                        <select class="form-select" id="private" required>
+                            <option value="0" selected>Public (0)</option>
+                            <option value="1">Private (1)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <h6 class="text-primary fw-bold mb-2">3. Activity & Network Ratios</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Total Posts</label>
+                        <input type="number" min="0" class="form-control" id="posts" value="120" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Followers Count</label>
+                        <input type="number" min="0" class="form-control" id="followers" value="450" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Following Count</label>
+                        <input type="number" min="0" class="form-control" id="follows" value="280" required>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" id="predict-submit-btn" class="btn btn-primary w-100 py-2 fw-semibold">
+                            <span id="predict-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
+                            Analyze Account Authenticity
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div id="predict-error" class="alert alert-danger mt-3 d-none"></div>
+        </div>
+    </div>
+
+    <!-- Output Card -->
+    <div class="col-lg-5">
+        <div id="predict-result-card" class="card p-4 d-none">
+            <h5 class="fw-bold mb-3">Assessment Outcome</h5>
+            
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <span class="text-muted">Prediction Label:</span>
+                <span id="result-badge" class="badge bg-secondary fs-5">Unknown</span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1 small">
+                    <span class="text-muted">Probability:</span>
+                    <span id="result-prob-text" class="fw-semibold">0%</span>
+                </div>
+                <div class="progress">
+                    <div id="result-prob-bar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <span class="text-muted">Assigned Risk Tier:</span>
+                <span id="result-risk-badge" class="badge badge-risk-low px-3 py-2 fs-6">Low</span>
+            </div>
+
+            <hr>
+
+            <h6 class="fw-bold mb-3">Top Influential Features (Model Drivers)</h6>
+            <div id="result-features-list">
+                <!-- Populated via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

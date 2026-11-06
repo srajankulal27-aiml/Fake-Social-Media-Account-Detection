@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Home - Fake Social Media Detection{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-lg-8">
+        <h1 class="display-5 fw-bold text-dark mb-3">🛡️ Fake Social Media Account Detection</h1>
+        <p class="lead text-muted">
+            An end-to-end, interpretable machine learning system engineered to assess account authenticity 
+            using public profile metadata, activity metrics, and network behavior ratios.
+        </p>
+        <div class="d-flex gap-2">
+            <a href="/predict" class="btn btn-primary btn-lg px-4">Single Account Analysis</a>
+            <a href="/batch" class="btn btn-outline-secondary btn-lg px-4">Batch CSV Audit</a>
+        </div>
+    </div>
+    <div class="col-lg-4 text-center">
+        <div class="card p-4 shadow-sm bg-white">
+            <h5 class="text-secondary mb-3">Production Model</h5>
+            <h3 class="text-primary fw-bold mb-1">{{ model_name }}</h3>
+            <p class="text-muted small">5-Fold CV Champion</p>
+            <hr>
+            <div class="row text-center">
+                <div class="col-6 mb-2">
+                    <span class="d-block small text-muted">Test Accuracy</span>
+                    <strong class="fs-5">{{ "%.2f"|format(metrics.accuracy * 100) }}%</strong>
+                </div>
+                <div class="col-6 mb-2">
+                    <span class="d-block small text-muted">Test Precision</span>
+                    <strong class="fs-5">{{ "%.2f"|format(metrics.precision * 100) }}%</strong>
+                </div>
+                <div class="col-6">
+                    <span class="d-block small text-muted">Test Recall</span>
+                    <strong class="fs-5">{{ "%.2f"|format(metrics.recall * 100) }}%</strong>
+                </div>
+                <div class="col-6">
+                    <span class="d-block small text-muted">Test ROC-AUC</span>
+                    <strong class="fs-5">{{ "%.4f"|format(metrics.roc_auc) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-warning d-flex align-items-center mb-5" role="alert">
+    <div>
+        <strong>⚠️ Transparency Notice:</strong> Predictions are probabilistic risk evaluations computed exclusively from user-submitted profile attributes. The system <strong>does not</strong> connect to live platform APIs or inspect private profiles.
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card h-100 p-3">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">🔍 Single Account Assessment</h5>
+                <p class="card-text text-muted">
+                    Enter profile metadata manually to generate instant classifications, confidence probabilities, and three-band risk tiers.
+                </p>
+                <a href="/predict" class="btn btn-outline-primary btn-sm">Analyze Account &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 p-3">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">📂 Bulk CSV Roster Audit</h5>
+                <p class="card-text text-muted">
+                    Upload an entire list of accounts in CSV format. Validate schemas, generate predictions in batch, and export annotated audit reports.
+                </p>
+                <a href="/batch" class="btn btn-outline-primary btn-sm">Upload CSV &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 p-3">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">📊 Verified Model Performance</h5>
+                <p class="card-text text-muted">
+                    Inspect 5-fold cross-validation benchmarks across candidate models, hold-out test metrics, confusion matrix, and ROC/PR curves.
+                </p>
+                <a href="/performance" class="btn btn-outline-primary btn-sm">View Diagnostics &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

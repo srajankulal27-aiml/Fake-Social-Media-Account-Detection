@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Exploratory Data Analysis - FSMD{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">📈 Exploratory Data Analysis (EDA)</h2>
+        <p class="text-muted">Statistical properties, class balance, and feature correlations of the training dataset.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-5">
+        <div class="card p-3 text-center h-100">
+            <h6 class="fw-bold mb-3">Training Set Class Balance (50/50 Split)</h6>
+            <img src="/reports-static/eda_class_distribution.png" class="img-fluid rounded border mb-3" alt="Class Distribution">
+            <p class="small text-muted mb-0">The dataset demonstrates near-perfect class balance (~50% genuine vs ~50% fake accounts).</p>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card p-3 text-center h-100">
+            <h6 class="fw-bold mb-3">Feature Correlation Heatmap</h6>
+            <img src="/reports-static/eda_correlation_matrix.png" class="img-fluid rounded border" alt="Correlation Matrix">
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card p-3">
+            <h5 class="fw-bold mb-3">Training Features Summary Statistics</h5>
+            {% if eda_stats %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped small align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Feature</th>
+                            <th>Count</th>
+                            <th>Mean</th>
+                            <th>Std Dev</th>
+                            <th>Min</th>
+                            <th>25%</th>
+                            <th>50% (Median)</th>
+                            <th>75%</th>
+                            <th>Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in eda_stats %}
+                        <tr>
+                            <td><code>{{ row.feature }}</code></td>
+                            <td>{{ row.count }}</td>
+                            <td>{{ "%.2f"|format(row.mean) }}</td>
+                            <td>{{ "%.2f"|format(row.std) }}</td>
+                            <td>{{ "%.2f"|format(row.min) }}</td>
+                            <td>{{ "%.2f"|format(row['25%']) }}</td>
+                            <td>{{ "%.2f"|format(row['50%']) }}</td>
+                            <td>{{ "%.2f"|format(row['75%']) }}</td>
+                            <td>{{ "%.2f"|format(row.max) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No training data summary available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

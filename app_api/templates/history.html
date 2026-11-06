@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Prediction History - FSMD{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="fw-bold">📜 Prediction History & Audit Log</h2>
+            <p class="text-muted">Persistent SQLite audit trail of past single and batch inferences.</p>
+        </div>
+        <div>
+            <button id="clear-history-btn" class="btn btn-outline-danger btn-sm">
+                🗑️ Clear History
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card p-3">
+            {% if history %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Mode</th>
+                            <th>Prediction</th>
+                            <th>Fake Probability</th>
+                            <th>Risk Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in history %}
+                        <tr>
+                            <td>#{{ row.id }}</td>
+                            <td>{{ row.timestamp }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ row.mode }}</span></td>
+                            <td><strong>{{ row.predicted_label }}</strong></td>
+                            <td>{{ "%.1f"|format(row.fake_probability * 100) }}%</td>
+                            <td>
+                                {% if row.risk_level == "Low Risk" %}
+                                <span class="badge badge-risk-low">{{ row.risk_level }}</span>
+                                {% elif row.risk_level == "Needs Review" %}
+                                <span class="badge badge-risk-review">{{ row.risk_level }}</span>
+                                {% else %}
+                                <span class="badge badge-risk-high">{{ row.risk_level }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <h5 class="text-muted">No prediction history recorded yet.</h5>
+                <p class="small text-muted">Run a single or batch account analysis to log records into SQLite.</p>
+                <a href="/predict" class="btn btn-primary btn-sm">Go to Predict Form</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

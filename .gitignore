@@ -3,6 +3,10 @@
 venv/
 ENV/
 
+# Environment variables
+.env
+*.env
+
 # Python bytecode & caches
 __pycache__/
 *.py[cod]
@@ -12,22 +16,25 @@ __pycache__/
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
-# Data files (keep folder placeholders)
+# Data files (keep sample templates and folder placeholders)
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
-data/sample/*
-!data/sample/.gitkeep
 
-# Model weights & binaries
+# Allow sample data to be version controlled
+!data/sample/
+!data/sample/*
+
+# Database files
+*.db
+*.sqlite3
+
+# Model weights & binaries (Keep production model artifact and gitkeep)
+!models/best_model.joblib
+!models/metadata.json
 !models/.gitkeep
 
 # OS generated files
 .DS_Store
 Thumbs.db
-
-
-*.db
-.env
-kaggle.json

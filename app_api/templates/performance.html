@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Model Performance - FSMD{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">📊 Model Performance & Diagnostic Evaluation</h2>
+        <p class="text-muted">Empirical validation metrics across candidate architectures and final test set verification.</p>
+    </div>
+</div>
+
+<!-- Test Set Metrics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md">
+        <div class="metric-card">
+            <span class="small text-muted d-block">Test Accuracy</span>
+            <h3 class="fw-bold mb-0 text-primary">{{ "%.2f"|format(metrics.accuracy * 100) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="metric-card">
+            <span class="small text-muted d-block">Test Precision</span>
+            <h3 class="fw-bold mb-0 text-success">{{ "%.2f"|format(metrics.precision * 100) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="metric-card">
+            <span class="small text-muted d-block">Test Recall</span>
+            <h3 class="fw-bold mb-0 text-info">{{ "%.2f"|format(metrics.recall * 100) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="metric-card">
+            <span class="small text-muted d-block">Test F1-Score</span>
+            <h3 class="fw-bold mb-0 text-warning">{{ "%.2f"|format(metrics.f1 * 100) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md">
+        <div class="metric-card">
+            <span class="small text-muted d-block">ROC-AUC</span>
+            <h3 class="fw-bold mb-0 text-dark">{{ "%.4f"|format(metrics.roc_auc) }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Cross Validation Benchmark Table -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card p-3">
+            <h5 class="fw-bold mb-3">5-Fold Stratified Cross-Validation Benchmark (Offline Training)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Model Architecture</th>
+                            <th>CV Accuracy</th>
+                            <th>CV Precision</th>
+                            <th>CV Recall</th>
+                            <th>CV F1-Score</th>
+                            <th>CV ROC-AUC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in cv_results %}
+                        <tr class="{% if row.Model == model_name %}table-primary fw-bold{% endif %}">
+                            <td>
+                                {{ row.Model }}
+                                {% if row.Model == model_name %}
+                                <span class="badge bg-primary ms-1">Champion</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ "%.2f"|format(row.Accuracy * 100) }}%</td>
+                            <td>{{ "%.2f"|format(row.Precision * 100) }}%</td>
+                            <td>{{ "%.2f"|format(row.Recall * 100) }}%</td>
+                            <td>{{ "%.2f"|format(row.F1 * 100) }}%</td>
+                            <td>{{ "%.4f"|format(row['ROC-AUC']) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-text mt-1">
+                *Selection rule: Model chosen based on highest cross-validated Recall & F1, prioritizing detection sensitivity while maintaining low false-alarm rates.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Reports -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-3 text-center">
+            <h6 class="fw-bold mb-3">Hold-Out Test Confusion Matrix</h6>
+            <img src="/reports-static/confusion_matrix.png" class="img-fluid rounded border" alt="Confusion Matrix">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3 text-center">
+            <h6 class="fw-bold mb-3">Test ROC & Precision-Recall Curves</h6>
+            <img src="/reports-static/roc_pr_curves.png" class="img-fluid rounded border" alt="ROC and PR Curves">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
