@@ -255,24 +255,41 @@ async def api_quickfill_predict(payload: QuickFillPredictRequest):
 async def api_screenshot_extract(file: UploadFile = File(...)):
     """Extract profile features from screenshot strictly in memory.
     Never persists, logs, or saves image bytes.
+    Enforces 5 MB limit and returns backend_used, confidence, warnings, and parsed values.
     """
-    valid_mimes = ["image/jpeg", "image/png", "image/webp", "image/bmp"]
-    if file.content_type not in valid_mimes and not any(file.filename.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+    valid_mimes = ["image/jpeg", "image/png", "image/webp", "image/bmp", "image/jpg"]
+    filename_lower = (file.filename or "").lower()
+    if file.content_type not in valid_mimes and not any(filename_lower.endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="File must be an image (JPEG, PNG, or WebP)."
+            detail="File must be a supported image format (JPEG, PNG, or WebP)."
         )
 
     contents = await file.read()
-    if len(contents) > 10 * 1024 * 1024:
+    if len(contents) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Uploaded image file is empty."
+        )
+
+    if len(contents) > 5 * 1024 * 1024:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="Image size exceeds 10 MB limit."
+            detail="Image size exceeds maximum permitted limit of 5 MB."
         )
 
     try:
-        extraction = extract_from_screenshot(contents)
+        extraction = extract_from_screenshot(
+            contents,
+            filename=file.filename or "",
+            content_type=file.content_type or ""
+        )
         return extraction
+    except ValueError as val_err:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(val_err)
+        )
     except Exception as ex:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

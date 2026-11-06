@@ -27,7 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Name == Username
         if (document.getElementById("name_equals_username")) {
-            const eq = (u.length > 0 && fn.toLowerCase().replace(/\s+/g, '') === u.toLowerCase()) ? 1 : 0;
+            const normFn = fn.toLowerCase().replace(/[\s._]/g, '');
+            const normU = u.toLowerCase().replace(/[\s._]/g, '');
+            const eq = (u.length > 0 && normFn.length > 0 && normFn === normU) ? 1 : 0;
             document.getElementById("name_equals_username").value = eq;
         }
 
@@ -50,6 +52,48 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inputFn) inputFn.addEventListener("input", recalculateDerivedFeatures);
     if (inputBio) inputBio.addEventListener("input", recalculateDerivedFeatures);
 
+    function highlightField(el, state) {
+        if (!el) return;
+        el.classList.remove("border-danger", "border-warning", "bg-warning-subtle", "bg-danger-subtle");
+        if (state === "none") {
+            el.classList.add("border-danger", "bg-danger-subtle");
+        } else if (state === "low") {
+            el.classList.add("border-warning", "bg-warning-subtle");
+        }
+    }
+
+    function clearHighlights() {
+        document.querySelectorAll(".field-input").forEach(el => {
+            el.classList.remove("border-danger", "border-warning", "bg-warning-subtle", "bg-danger-subtle");
+        });
+    }
+
+    // Reset button handler
+    const resetBtn = document.getElementById("screenshot-reset-btn");
+    if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+            const fileInput = document.getElementById("screenshot-input");
+            if (fileInput) fileInput.value = "";
+            clearHighlights();
+            document.getElementById("screenshot-status-box")?.classList.add("d-none");
+            document.getElementById("claude-privacy-notice")?.classList.add("d-none");
+            document.getElementById("fields-validation-alert")?.classList.add("d-none");
+            resetBtn.classList.add("d-none");
+
+            // Clear inputs
+            if (document.getElementById("input-username")) document.getElementById("input-username").value = "";
+            if (document.getElementById("input-fullname")) document.getElementById("input-fullname").value = "";
+            if (document.getElementById("input-bio")) document.getElementById("input-bio").value = "";
+            if (document.getElementById("posts")) document.getElementById("posts").value = "";
+            if (document.getElementById("followers")) document.getElementById("followers").value = "";
+            if (document.getElementById("follows")) document.getElementById("follows").value = "";
+            if (document.getElementById("profile_pic")) document.getElementById("profile_pic").value = "";
+            if (document.getElementById("private")) document.getElementById("private").value = "";
+            
+            recalculateDerivedFeatures();
+        });
+    }
+
     // Screenshot OCR Handler
     const screenshotForm = document.getElementById("screenshot-form");
     if (screenshotForm) {
@@ -59,12 +103,21 @@ document.addEventListener("DOMContentLoaded", () => {
             const spinner = document.getElementById("screenshot-spinner");
             const btn = document.getElementById("screenshot-btn");
             const errorBox = document.getElementById("screenshot-error");
+            const statusBox = document.getElementById("screenshot-status-box");
+            const backendName = document.getElementById("status-backend-name");
+            const confSummary = document.getElementById("status-confidence-summary");
+            const warningsList = document.getElementById("status-warnings-list");
+            const claudeNotice = document.getElementById("claude-privacy-notice");
+            const valAlert = document.getElementById("fields-validation-alert");
 
             if (!fileInput.files.length) return;
 
             btn.disabled = true;
             spinner.classList.remove("d-none");
             errorBox.classList.add("d-none");
+            statusBox.classList.add("d-none");
+            if (valAlert) valAlert.classList.add("d-none");
+            clearHighlights();
 
             const formData = new FormData();
             formData.append("file", fileInput.files[0]);
@@ -74,40 +127,127 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     body: formData
                 });
+                
                 if (!res.ok) {
                     const err = await res.json();
                     throw new Error(err.detail || "Screenshot extraction failed.");
                 }
                 const data = await res.json();
-                if (data.error) {
-                    throw new Error("OCR Note: " + data.error);
+
+                // Show reset button
+                if (resetBtn) resetBtn.classList.remove("d-none");
+
+                // Update backend badge and privacy notice
+                const backend = data.backend_used || "tesseract";
+                if (backendName) backendName.textContent = backend;
+                if (backend === "claude") {
+                    claudeNotice?.classList.remove("d-none");
+                } else {
+                    claudeNotice?.classList.add("d-none");
                 }
 
-                // Populate fields
+                // Show warnings if any
+                statusBox.classList.remove("d-none");
+                if (warningsList) {
+                    warningsList.innerHTML = "";
+                    if (data.warnings && data.warnings.length > 0) {
+                        data.warnings.forEach(w => {
+                            const d = document.createElement("div");
+                            d.textContent = "• " + w;
+                            warningsList.appendChild(d);
+                        });
+                    }
+                }
+
                 const parsed = data.parsed || {};
-                if (parsed.username && document.getElementById("input-username")) {
-                    document.getElementById("input-username").value = parsed.username;
+                const conf = data.confidence || {};
+
+                // Username
+                const uEl = document.getElementById("input-username");
+                if (uEl) {
+                    uEl.value = parsed.username || "";
+                    highlightField(uEl, conf.username || "none");
                 }
-                if (parsed.full_name && document.getElementById("input-fullname")) {
-                    document.getElementById("input-fullname").value = parsed.full_name;
+
+                // Full Name
+                const fnEl = document.getElementById("input-fullname");
+                if (fnEl) {
+                    fnEl.value = parsed.full_name || "";
+                    highlightField(fnEl, conf.full_name || "none");
                 }
-                if (parsed.bio && document.getElementById("input-bio")) {
-                    document.getElementById("input-bio").value = parsed.bio;
+
+                // Bio
+                const bioEl = document.getElementById("input-bio");
+                if (bioEl) {
+                    bioEl.value = parsed.bio || "";
+                    highlightField(bioEl, conf.bio || "none");
                 }
-                if (parsed.posts !== undefined && document.getElementById("posts")) {
-                    document.getElementById("posts").value = parsed.posts;
+
+                // Posts
+                const postsEl = document.getElementById("posts");
+                if (postsEl) {
+                    postsEl.value = (parsed.posts !== null && parsed.posts !== undefined) ? parsed.posts : "";
+                    highlightField(postsEl, conf.posts || "none");
                 }
-                if (parsed.followers !== undefined && document.getElementById("followers")) {
-                    document.getElementById("followers").value = parsed.followers;
+
+                // Followers
+                const fersEl = document.getElementById("followers");
+                if (fersEl) {
+                    fersEl.value = (parsed.followers !== null && parsed.followers !== undefined) ? parsed.followers : "";
+                    highlightField(fersEl, conf.followers || "none");
                 }
-                if (parsed.following !== undefined && document.getElementById("follows")) {
-                    document.getElementById("follows").value = parsed.following;
+
+                // Following
+                const fingEl = document.getElementById("follows");
+                if (fingEl) {
+                    fingEl.value = (parsed.following !== null && parsed.following !== undefined) ? parsed.following : "";
+                    highlightField(fingEl, conf.following || "none");
                 }
-                if (parsed.is_private !== undefined && document.getElementById("private")) {
-                    document.getElementById("private").value = parsed.is_private;
+
+                // Profile Picture
+                const picEl = document.getElementById("profile_pic");
+                const picHint = document.getElementById("pic-autodetect-hint");
+                if (picEl) {
+                    if (parsed.has_custom_profile_picture === true) {
+                        picEl.value = "1";
+                        picHint?.classList.remove("d-none");
+                    } else if (parsed.has_custom_profile_picture === false) {
+                        picEl.value = "0";
+                        picHint?.classList.remove("d-none");
+                    } else {
+                        picEl.value = "";
+                        picHint?.classList.add("d-none");
+                    }
+                    highlightField(picEl, conf.has_custom_profile_picture || "none");
                 }
-                if (parsed.profile_pic !== undefined && document.getElementById("profile_pic")) {
-                    document.getElementById("profile_pic").value = parsed.profile_pic;
+
+                // Private Account
+                const privEl = document.getElementById("private");
+                const privHint = document.getElementById("private-autodetect-hint");
+                if (privEl) {
+                    if (parsed.is_private === true) {
+                        privEl.value = "1";
+                        privHint?.classList.remove("d-none");
+                    } else if (parsed.is_private === false) {
+                        privEl.value = "0";
+                        privHint?.classList.remove("d-none");
+                    } else {
+                        privEl.value = "";
+                        privHint?.classList.add("d-none");
+                    }
+                    highlightField(privEl, conf.is_private || "none");
+                }
+
+                // Summary confidence text
+                const unconfidentCount = Object.values(conf).filter(c => c === "none" || c === "low").length;
+                if (confSummary) {
+                    if (unconfidentCount === 0) {
+                        confSummary.className = "badge bg-success";
+                        confSummary.textContent = "High Confidence";
+                    } else {
+                        confSummary.className = "badge bg-warning text-dark";
+                        confSummary.textContent = `${unconfidentCount} fields need review`;
+                    }
                 }
 
                 recalculateDerivedFeatures();
@@ -181,8 +321,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Single Prediction Form Handler (Works with unified form or classic form)
-    const unifiedForm = document.getElementById("unified-predict-form") || document.getElementById("predict-form");
+    // Unified Predict Form Handler
+    const unifiedForm = document.getElementById("unified-predict-form");
     if (unifiedForm) {
         unifiedForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -190,27 +330,55 @@ document.addEventListener("DOMContentLoaded", () => {
             const spinner = document.getElementById("predict-spinner");
             const errorBox = document.getElementById("predict-error");
             const resultCard = document.getElementById("predict-result-card");
+            const valAlert = document.getElementById("fields-validation-alert");
+            const missingText = document.getElementById("missing-fields-text");
+
+            // Validate mandatory fields
+            const u = document.getElementById("input-username")?.value.trim();
+            const p = document.getElementById("posts")?.value.trim();
+            const fers = document.getElementById("followers")?.value.trim();
+            const fing = document.getElementById("follows")?.value.trim();
+            const pic = document.getElementById("profile_pic")?.value;
+            const priv = document.getElementById("private")?.value;
+
+            const missing = [];
+            if (!u) missing.push("Username");
+            if (p === "" || isNaN(p) || parseInt(p) < 0) missing.push("Posts Count");
+            if (fers === "" || isNaN(fers) || parseInt(fers) < 0) missing.push("Followers Count");
+            if (fing === "" || isNaN(fing) || parseInt(fing) < 0) missing.push("Following Count");
+            if (pic === "" || pic === null || pic === undefined) missing.push("Profile Picture Present");
+            if (priv === "" || priv === null || priv === undefined) missing.push("Account Private");
+
+            if (missing.length > 0) {
+                if (valAlert && missingText) {
+                    missingText.textContent = missing.join(", ");
+                    valAlert.classList.remove("d-none");
+                    valAlert.scrollIntoView({ behavior: "smooth" });
+                }
+                return;
+            } else {
+                if (valAlert) valAlert.classList.add("d-none");
+            }
 
             btn.disabled = true;
             spinner.classList.remove("d-none");
             errorBox.classList.add("d-none");
             resultCard.classList.add("d-none");
 
-            // Recalculate first
             recalculateDerivedFeatures();
 
             const payload = {
-                "profile pic": parseInt(document.getElementById("profile_pic").value),
-                "nums/length username": parseFloat(document.getElementById("nums_length_username").value),
-                "fullname words": parseInt(document.getElementById("fullname_words").value),
-                "nums/length fullname": parseFloat(document.getElementById("nums_length_fullname").value),
-                "name==username": parseInt(document.getElementById("name_equals_username").value),
-                "description length": parseInt(document.getElementById("description_length").value),
-                "external URL": parseInt(document.getElementById("external_url").value),
-                "private": parseInt(document.getElementById("private").value),
-                "#posts": parseInt(document.getElementById("posts").value),
-                "#followers": parseInt(document.getElementById("followers").value),
-                "#follows": parseInt(document.getElementById("follows").value)
+                "profile pic": parseInt(pic),
+                "nums/length username": parseFloat(document.getElementById("nums_length_username").value || "0"),
+                "fullname words": parseInt(document.getElementById("fullname_words").value || "0"),
+                "nums/length fullname": parseFloat(document.getElementById("nums_length_fullname").value || "0"),
+                "name==username": parseInt(document.getElementById("name_equals_username").value || "0"),
+                "description length": parseInt(document.getElementById("description_length").value || "0"),
+                "external URL": parseInt(document.getElementById("external_url").value || "0"),
+                "private": parseInt(priv),
+                "#posts": parseInt(p),
+                "#followers": parseInt(fers),
+                "#follows": parseInt(fing)
             };
 
             try {

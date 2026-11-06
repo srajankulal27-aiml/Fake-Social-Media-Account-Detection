@@ -8,14 +8,20 @@
         <p class="text-muted">Analyze an account using screenshot OCR extraction, raw profile text parsing, or direct feature inputs.</p>
         
         <!-- Ethics and Privacy Notice -->
-        <div class="alert alert-secondary py-2 px-3 small d-flex align-items-center">
+        <div class="alert alert-secondary py-2 px-3 small d-flex align-items-center mb-2">
             <i class="bi bi-shield-check fs-5 me-2 text-success"></i>
             <div>
-                <strong>Privacy & Ethics Assurance:</strong> This tool runs completely locally. 
-                <strong>No live scraping or external Instagram network requests</strong> are performed. 
-                Screenshots are processed <strong>strictly in memory</strong> (never saved to disk or database). 
+                <strong>Privacy & Ethics Assurance:</strong> This application never contacts Instagram. 
+                Screenshots are processed <strong>strictly in memory</strong> (never saved to disk, logged, or stored in a database). 
                 The model inspects metadata and counts, never pixel faces or private photos.
             </div>
+        </div>
+
+        <!-- Claude Third-Party API Disclosure (Shown dynamically or statically) -->
+        <div id="claude-privacy-notice" class="alert alert-warning py-2 px-3 small d-none">
+            <i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>
+            <strong>Third-Party Processing Notice:</strong> The Claude Vision backend was used to analyze this screenshot. 
+            Image bytes were sent to Anthropic's API for reading. Only analyze screenshots you have permission to evaluate.
         </div>
     </div>
 </div>
@@ -47,13 +53,18 @@
             <!-- 1. SCREENSHOT OCR TAB -->
             <div class="tab-pane fade show active" id="content-screenshot" role="tabpanel">
                 <div class="card p-4 mb-3">
-                    <h5 class="fw-bold text-primary mb-2">Upload Profile Screenshot</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-primary mb-0">Upload Profile Screenshot</h5>
+                        <button type="button" id="screenshot-reset-btn" class="btn btn-sm btn-outline-secondary d-none">
+                            🔄 Use another screenshot
+                        </button>
+                    </div>
                     <p class="small text-muted mb-3">Upload a screenshot of the account header. OCR extracts username, bio, post count, and followers in memory.</p>
                     
                     <form id="screenshot-form">
                         <div class="mb-3">
                             <input class="form-control" type="file" id="screenshot-input" accept="image/png, image/jpeg, image/webp" required>
-                            <div class="form-text">Supported: PNG, JPG, WebP (Max 10 MB). Processed in RAM only.</div>
+                            <div class="form-text">Supported: PNG, JPG, WebP (Max 5 MB). Processed in RAM only.</div>
                         </div>
                         <button type="submit" id="screenshot-btn" class="btn btn-outline-primary w-100">
                             <span id="screenshot-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"></span>
@@ -61,6 +72,15 @@
                         </button>
                     </form>
                     <div id="screenshot-error" class="alert alert-danger mt-3 d-none"></div>
+
+                    <!-- Extraction Meta Status (Backend + Warnings) -->
+                    <div id="screenshot-status-box" class="alert alert-info mt-3 small d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span><strong>Backend Used:</strong> <span id="status-backend-name" class="badge bg-primary">tesseract</span></span>
+                            <span id="status-confidence-summary" class="badge bg-secondary">Review Needed</span>
+                        </div>
+                        <div id="status-warnings-list" class="text-danger mt-1"></div>
+                    </div>
                 </div>
             </div>
 
@@ -92,7 +112,7 @@
             <div class="tab-pane fade" id="content-advanced" role="tabpanel">
                 <div class="card p-4 mb-3">
                     <h5 class="fw-bold text-primary mb-2">Direct Raw Feature Input</h5>
-                    <p class="small text-muted mb-3">Directly supply the 11 raw numeric features used by the underlying Random Forest model.</p>
+                    <p class="small text-muted mb-3">Directly supply or inspect the 11 raw numeric features used by the Random Forest model.</p>
                 </div>
             </div>
         </div>
@@ -101,81 +121,90 @@
         <div class="card p-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold text-dark mb-0">Profile Attributes for Inference</h5>
-                <span class="badge bg-light text-dark border">Review & Fine-Tune</span>
+                <span class="badge bg-light text-dark border">Verify Before Predicting</span>
+            </div>
+
+            <div id="fields-validation-alert" class="alert alert-warning small d-none">
+                <strong>Attention:</strong> Please fill in all required fields before running the prediction:
+                <span id="missing-fields-text"></span>
             </div>
             
             <form id="unified-predict-form">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Username</label>
-                        <input type="text" class="form-control" id="input-username" value="user_profile">
-                        <div class="form-text">Used to derive digit ratio & name matching.</div>
+                        <label class="form-label small fw-semibold">Username <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control field-input" id="input-username" placeholder="e.g. srajankulal27" required>
+                        <div class="form-text">Used for digit ratio & name matching.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Full Name</label>
-                        <input type="text" class="form-control" id="input-fullname" value="User Profile">
+                        <input type="text" class="form-control field-input" id="input-fullname" placeholder="e.g. Srajan Kulal">
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Profile Picture Present?</label>
-                        <select class="form-select" id="profile_pic" required>
-                            <option value="1" selected>Yes (1)</option>
-                            <option value="0">No (0)</option>
+                        <label class="form-label small fw-semibold">Profile Picture Present? <span class="text-danger">*</span></label>
+                        <select class="form-select field-input" id="profile_pic" required>
+                            <option value="" selected disabled>Select...</option>
+                            <option value="1">Yes (Custom Photo)</option>
+                            <option value="0">No (Default Silhouette / Empty)</option>
                         </select>
+                        <div id="pic-autodetect-hint" class="form-text text-muted d-none">Auto-detected, please confirm.</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Account Private?</label>
-                        <select class="form-select" id="private" required>
-                            <option value="0" selected>Public (0)</option>
-                            <option value="1">Private (1)</option>
+                        <label class="form-label small fw-semibold">Account Private? <span class="text-danger">*</span></label>
+                        <select class="form-select field-input" id="private" required>
+                            <option value="" selected disabled>Select...</option>
+                            <option value="0">Public Account</option>
+                            <option value="1">Private Account</option>
                         </select>
+                        <div id="private-autodetect-hint" class="form-text text-muted d-none">Auto-detected, please confirm.</div>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Posts Count</label>
-                        <input type="number" min="0" class="form-control" id="posts" value="120" required>
+                        <label class="form-label small fw-semibold">Posts Count <span class="text-danger">*</span></label>
+                        <input type="number" min="0" class="form-control field-input" id="posts" placeholder="0" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Followers</label>
-                        <input type="number" min="0" class="form-control" id="followers" value="450" required>
+                        <label class="form-label small fw-semibold">Followers Count <span class="text-danger">*</span></label>
+                        <input type="number" min="0" class="form-control field-input" id="followers" placeholder="0" required>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label small fw-semibold">Following</label>
-                        <input type="number" min="0" class="form-control" id="follows" value="280" required>
+                        <label class="form-label small fw-semibold">Following Count <span class="text-danger">*</span></label>
+                        <input type="number" min="0" class="form-control field-input" id="follows" placeholder="0" required>
                     </div>
 
                     <div class="col-12">
                         <label class="form-label small fw-semibold">Biography / Description</label>
-                        <textarea class="form-control" id="input-bio" rows="2" placeholder="Account bio...">Photography enthusiast | Digital creator | Exploring cities</textarea>
+                        <textarea class="form-control field-input" id="input-bio" rows="2" placeholder="Account bio / description..."></textarea>
                     </div>
 
-                    <!-- Hidden or Advanced Ratios populated automatically -->
+                    <!-- Hidden/Advanced Ratios calculated automatically -->
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Username Digits/Len</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_username" value="0.0">
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_username" placeholder="0.00" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Fullname Words</label>
-                        <input type="number" class="form-control form-control-sm" id="fullname_words" value="2">
+                        <input type="number" class="form-control form-control-sm" id="fullname_words" placeholder="0" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Fullname Digits/Len</label>
-                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_fullname" value="0.0">
+                        <input type="number" step="0.01" class="form-control form-control-sm" id="nums_length_fullname" placeholder="0.00" readonly>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label small text-muted">Name == Username</label>
-                        <select class="form-select form-select-sm" id="name_equals_username">
+                        <select class="form-select form-select-sm" id="name_equals_username" disabled>
                             <option value="0" selected>No (0)</option>
                             <option value="1">Yes (1)</option>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small text-muted">Bio Length (chars)</label>
-                        <input type="number" class="form-control form-control-sm" id="description_length" value="55">
+                        <input type="number" class="form-control form-control-sm" id="description_length" placeholder="0" readonly>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small text-muted">External URL Present?</label>
-                        <select class="form-select form-select-sm" id="external_url">
+                        <select class="form-select form-select-sm" id="external_url" disabled>
                             <option value="0" selected>No (0)</option>
                             <option value="1">Yes (1)</option>
                         </select>

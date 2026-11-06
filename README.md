@@ -325,7 +325,7 @@ Or directly using Uvicorn:
 - **Interactive Swagger API Docs:** Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
 ### Run Test Suite
-Run all 36 test cases with the PowerShell runner:
+Run the automated test suite (45 unit, integration, and screenshot OCR tests) with the PowerShell runner:
 ```powershell
 .\run_tests.ps1
 ```
@@ -336,7 +336,41 @@ Or via pytest:
 
 ---
 
-## 13. Deployment Notes (Render)
+## 13. Screenshot Autofill & OCR Extraction Architecture
+
+The system supports memory-only screenshot ingestion (`POST /api/screenshot/extract`) to automatically populate the 11 model features from any Instagram-style profile screenshot.
+
+### Supported Backends & Fallback Logic
+1. **Primary Backend (Anthropic Claude Vision):**
+   - Activated automatically if `ANTHROPIC_API_KEY` is present in the environment or `.env` file (configured via `CLAUDE_MODEL`, default: `claude-3-haiku-20240307`).
+   - Parses complex mobile UI layouts, handles abbreviations (`1.2K` -> `1200`, `3.4M` -> `3400000`), verifies whether the image is an Instagram profile, and extracts fields with high fidelity.
+   - **Privacy Notice:** When the Claude backend is used, image bytes are sent in-memory to Anthropic's API. A prominent disclosure is surfaced in the UI.
+
+2. **Local Fallback Backend (Multi-Stage Tesseract OCR):**
+   - Active when no Claude API key is configured, or automatically invoked if the Claude API fails, experiences rate limits, or network errors.
+   - Utilizes multi-stage image preprocessing variants:
+     - 2x upscale with autocontrast
+     - Inverted luminance for Dark Mode mobile screenshots
+     - 3x upscale high-contrast thresholding
+   - Uses `pytesseract.image_to_data` with fuzzy matching (`difflib >= 0.7`) to locate `posts`, `followers`, and `following` labels, reading numbers directly above (or beside) the label.
+   - Estimates avatar type (custom photo vs default grey silhouette) using pixel color channel variance and near-grey statistics without face recognition.
+   - Returns `null` and highlights unlocated fields for human confirmation; never returns false zeros.
+
+### Capabilities & Limitations Comparison Matrix
+
+| Feature / Capability | Claude Vision Backend | Local Tesseract OCR Backend |
+| :--- | :--- | :--- |
+| **Dark Mode & Light Mode** | Supported seamlessly | Supported (auto-inversion preprocessing) |
+| **K / M Multiplier Parsing** | Automatic conversion (`1.2K` -> 1200) | Regex & metric parser (`1.2K` -> 1200) |
+| **Layout Flexibility** | Very High (handles any phone resolution) | High (number-above or number-beside) |
+| **Avatar Detection** | High (visual silhouette detection) | Moderate (pixel statistics heuristic) |
+| **Network Requirement** | Requires Internet & Anthropic API Key | 100% Offline / Local processing |
+| **Processing Privacy** | Processed in-memory via Anthropic API | Processed 100% locally in-memory |
+| **Image Persistence** | Never written to disk or database | Never written to disk or database |
+
+---
+
+## 14. Deployment Notes (Render)
 
 - **Build Command:** `pip install -r requirements.txt`
 - **Start Command:** `uvicorn app_api.main:app --host 0.0.0.0 --port $PORT`
