@@ -1,87 +1,161 @@
 {% extends "base.html" %}
-{% block title %}Home - Fake Social Media Detection{% endblock %}
+{% block title %}Fake Social Media Detection - ML Authenticity Platform{% endblock %}
 
-{% block content %}
-<div class="row align-items-center mb-5">
-    <div class="col-lg-8">
-        <h1 class="display-5 fw-bold text-dark mb-3">🛡️ Fake Social Media Account Detection</h1>
-        <p class="lead text-muted">
-            An end-to-end, interpretable machine learning system engineered to assess account authenticity 
-            using public profile metadata, activity metrics, and network behavior ratios.
-        </p>
-        <div class="d-flex gap-2">
-            <a href="/predict" class="btn btn-primary btn-lg px-4">Single Account Analysis</a>
-            <a href="/batch" class="btn btn-outline-secondary btn-lg px-4">Batch CSV Audit</a>
-        </div>
-    </div>
-    <div class="col-lg-4 text-center">
-        <div class="card p-4 shadow-sm bg-white">
-            <h5 class="text-secondary mb-3">Production Model</h5>
-            <h3 class="text-primary fw-bold mb-1">{{ model_name }}</h3>
-            <p class="text-muted small">5-Fold CV Champion</p>
-            <hr>
-            <div class="row text-center">
-                <div class="col-6 mb-2">
-                    <span class="d-block small text-muted">Test Accuracy</span>
-                    <strong class="fs-5">{{ "%.2f"|format(metrics.accuracy * 100) }}%</strong>
-                </div>
-                <div class="col-6 mb-2">
-                    <span class="d-block small text-muted">Test Precision</span>
-                    <strong class="fs-5">{{ "%.2f"|format(metrics.precision * 100) }}%</strong>
-                </div>
-                <div class="col-6">
-                    <span class="d-block small text-muted">Test Recall</span>
-                    <strong class="fs-5">{{ "%.2f"|format(metrics.recall * 100) }}%</strong>
-                </div>
-                <div class="col-6">
-                    <span class="d-block small text-muted">Test ROC-AUC</span>
-                    <strong class="fs-5">{{ "%.4f"|format(metrics.roc_auc) }}</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block main_container %}
+<div class="home-page-container">
+    <!-- Hero Section -->
+    <div class="hero-row">
+        <!-- Soft Radial Glow in Center -->
+        <div class="hero-radial-glow"></div>
 
-<div class="alert alert-warning d-flex align-items-center mb-5" role="alert">
-    <div>
-        <strong>⚠️ Transparency Notice:</strong> Predictions are probabilistic risk evaluations computed exclusively from user-submitted profile attributes. The system <strong>does not</strong> connect to live platform APIs or inspect private profiles.
-    </div>
-</div>
+        <!-- 1. Left Hero Column -->
+        <div class="hero-left-col">
+            <div class="pill-badge-green">
+                <span class="green-dot"></span>
+                <span>AI-Powered Authenticity Analysis</span>
+            </div>
 
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card h-100 p-3">
-            <div class="card-body">
-                <h5 class="card-title fw-bold">🔍 Single Account Assessment</h5>
-                <p class="card-text text-muted">
-                    Enter profile metadata manually to generate instant classifications, confidence probabilities, and three-band risk tiers.
+            <h1 class="hero-heading">
+                Fake Social<br>
+                Media <span class="accent-purple">Detection.</span>
+            </h1>
+
+            <p class="hero-description">
+                An intelligent machine learning system to identify fake or suspicious social media accounts using profile and activity patterns.
+            </p>
+
+            <div class="hero-buttons-row">
+                <a href="/predict" class="btn-pill-primary">
+                    Analyze Account
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </a>
+                <a href="/batch" class="btn-pill-secondary">
+                    Batch CSV Audit
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+                </a>
+            </div>
+
+            <div class="available-on-row">
+                <span class="available-on-text">Available on</span>
+                <!-- GitHub Icon Chip -->
+                <div class="chip-circle" title="Open Source on GitHub">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                </div>
+                <!-- Python Icon Chip -->
+                <div class="chip-circle" title="Python 3.12 ML Pipeline">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10 15 5-3-5-3v6Z"></path><circle cx="12" cy="12" r="10"></circle></svg>
+                </div>
+                <!-- Stats Icon Chip -->
+                <div class="chip-circle" title="SHAP Model Interpretability">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Centre Shield Illustration -->
+        <div class="hero-center-col">
+            <img src="/static/img/hero-shield.png" alt="AI Social Media Detection Shield Illustration" class="hero-shield-img">
+        </div>
+
+        <!-- 3. Right Stats Column -->
+        <div class="hero-right-col">
+            <div class="stat-vertical-divider"></div>
+            
+            <div class="stats-content-wrap">
+                <p class="stats-intro-text">
+                    Detects whether a social media account is genuine or fake using machine learning, OCR, and behavioral profile analysis.
                 </p>
-                <a href="/predict" class="btn btn-outline-primary btn-sm">Analyze Account &rarr;</a>
+
+                <div class="stat-items-group">
+                    <!-- Stat 1: Model Accuracy -->
+                    <div class="stat-item-row">
+                        <div class="stat-icon-tile">
+                            <!-- Target / Accuracy Icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">{{ "%.2f"|format(metrics.accuracy * 100) }}%</div>
+                            <div class="stat-label">Model Accuracy</div>
+                        </div>
+                    </div>
+
+                    <!-- Stat 2: Accounts in Dataset -->
+                    <div class="stat-item-row">
+                        <div class="stat-icon-tile">
+                            <!-- Database Icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">692</div>
+                            <div class="stat-label">Accounts in Dataset</div>
+                        </div>
+                    </div>
+
+                    <!-- Stat 3: 5-Fold CV -->
+                    <div class="stat-item-row">
+                        <div class="stat-icon-tile">
+                            <!-- Lightning / Production Model Icon -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        </div>
+                        <div>
+                            <div class="stat-value">5-Fold CV</div>
+                            <div class="stat-label">Production Model ({{ model_name }})</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100 p-3">
-            <div class="card-body">
-                <h5 class="card-title fw-bold">📂 Bulk CSV Roster Audit</h5>
-                <p class="card-text text-muted">
-                    Upload an entire list of accounts in CSV format. Validate schemas, generate predictions in batch, and export annotated audit reports.
-                </p>
-                <a href="/batch" class="btn btn-outline-primary btn-sm">Upload CSV &rarr;</a>
+
+    <!-- 4. Feature Cards Row (4 Columns) -->
+    <div class="features-grid-row">
+        <!-- Card 1 -->
+        <a href="/predict" class="feature-pill-card">
+            <div class="feature-icon-tile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100 p-3">
-            <div class="card-body">
-                <h5 class="card-title fw-bold">📊 Verified Model Performance</h5>
-                <p class="card-text text-muted">
-                    Inspect 5-fold cross-validation benchmarks across candidate models, hold-out test metrics, confusion matrix, and ROC/PR curves.
-                </p>
-                <a href="/performance" class="btn btn-outline-primary btn-sm">View Diagnostics &rarr;</a>
+            <div class="feature-card-title">Single Account Analysis</div>
+            <p class="feature-card-desc">Analyze a profile using screenshot OCR or manual input.</p>
+            <div class="card-corner-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </div>
-        </div>
+        </a>
+
+        <!-- Card 2 -->
+        <a href="/batch" class="feature-pill-card">
+            <div class="feature-icon-tile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"></path><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"></path><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"></path></svg>
+            </div>
+            <div class="feature-card-title">Batch CSV Audit</div>
+            <p class="feature-card-desc">Upload multiple accounts and get predictions in bulk.</p>
+            <div class="card-corner-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+        </a>
+
+        <!-- Card 3 -->
+        <a href="/performance" class="feature-pill-card">
+            <div class="feature-icon-tile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </div>
+            <div class="feature-card-title">Model Performance</div>
+            <p class="feature-card-desc">View accuracy, precision, recall and ROC-AUC metrics.</p>
+            <div class="card-corner-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+        </a>
+
+        <!-- Card 4 -->
+        <a href="/eda" class="feature-pill-card">
+            <div class="feature-icon-tile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+            </div>
+            <div class="feature-card-title">EDA & Insights</div>
+            <p class="feature-card-desc">Explore data patterns and feature distributions.</p>
+            <div class="card-corner-arrow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </div>
+        </a>
     </div>
 </div>
 {% endblock %}
-

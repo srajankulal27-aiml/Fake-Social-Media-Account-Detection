@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Fake Social Media Account Detection{% endblock %}</title>
+    <title>{% block title %}Fake Social Media Detection{% endblock %}</title>
+    <!-- Google Font Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Custom CSS -->
     <link href="/static/css/style.css" rel="stylesheet">
     <!-- Chart.js via CDN -->
@@ -13,43 +19,46 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3">
-        <div class="container">
-            <a class="navbar-brand text-primary" href="/">🛡️ FSMD System</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarMain">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/predict">Single Predict</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/batch">Batch Audit</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/performance">Model Performance</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/eda">EDA</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/history">History</a></li>
-                    <li class="nav-item"><a class="nav-link btn btn-outline-primary btn-sm ms-2 px-3 text-light" href="/docs" target="_blank">API Docs</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <header class="navbar-custom">
+        <div class="navbar-container">
+            <a class="brand-logo" href="/">
+                Fake Social Media<span class="brand-purple">Detection</span>
+            </a>
 
-    <!-- Main Content -->
-    <main class="py-4">
-        <div class="container">
+            <ul class="nav-links-center">
+                <li><a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Home</a></li>
+                <li><a href="/predict" class="{% if request.url.path == '/predict' %}active{% endif %}">Analysis</a></li>
+                <li><a href="/batch" class="{% if request.url.path == '/batch' %}active{% endif %}">Batch Audit</a></li>
+                <li><a href="/performance" class="{% if request.url.path == '/performance' %}active{% endif %}">Performance</a></li>
+                <li><a href="/eda" class="{% if request.url.path == '/eda' %}active{% endif %}">EDA</a></li>
+                <li><a href="/history" class="{% if request.url.path == '/history' %}active{% endif %}">History</a></li>
+                <li><a href="/docs" target="_blank">Docs</a></li>
+            </ul>
+
+            <a href="/predict" class="nav-cta-btn">
+                Run Analysis <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Body Area -->
+    <main>
+        {% block main_container %}
+        <div class="app-container">
             {% block content %}{% endblock %}
         </div>
+        {% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="py-4 mt-5">
-        <div class="container text-center small">
-            <p class="mb-1 fw-bold text-white">Fake Social Media Account Detection Using Machine Learning</p>
-            <p class="mb-2">
-                <strong>Limitations & Operational Ethics:</strong> Trained on historical tabular benchmark dataset (~700 records; hold-out test set 139 records).
-                Outputs are probabilistic risk scores derived exclusively from user-supplied profile features, not live platform scraping or private account inspection.
-                Never use model scores alone as justification to penalize or suspend an account.
+    <footer class="site-footer">
+        <div class="container text-center">
+            <p class="fw-bold mb-1" style="color: var(--navy);">Fake Social Media Account Detection Using Machine Learning</p>
+            <p class="small text-muted mb-0" style="max-width: 900px; margin: 0 auto;">
+                <strong>Limitations & Operational Ethics:</strong> Evaluated on benchmark dataset records. 
+                Outputs are statistical probabilities, not definitive proof of account authenticity. 
+                The system analyzes only user-supplied metadata or screenshots and <strong>never contacts Instagram or scrapes live data</strong>.
             </p>
-            <p class="mb-0 text-secondary">&copy; 2026 FSMD Team. Built with FastAPI and Bootstrap 5.</p>
         </div>
     </footer>
 
@@ -59,4 +68,3 @@
     <script src="/static/js/app.js"></script>
 </body>
 </html>
-
