@@ -28,3 +28,7 @@ models/*.joblib
 .DS_Store
 Thumbs.db
 
+
+*.db
+.env
+kaggle.json
